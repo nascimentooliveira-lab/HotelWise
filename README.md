@@ -53,7 +53,7 @@ A modelagem de classes é o ponto central deste projeto, desenhada para demonstr
 | **InventarioManager** | Serviço / Composição | Gerencia a lista de todas as `Acomodacoes`, aplicando bloqueios de manutenção e consultando disponibilidade. |
 ---
 
-## 🏨 UML Textual — Sistema de Hospedagem
+## 🏨 UML Textual
 
 ## Classe: Pessoa (Classe Base)
 
@@ -83,7 +83,7 @@ Relacionamentos
 Herdada de Pessoa
 Hospede possui várias Reservas (0..*)
 
-## Classe: Funcionario (extends Pessoa) (opcional, mas previsto pelo conceito)
+## Classe: Funcionario (extends Pessoa) 
 
 Atributos
 idFuncionario : int
