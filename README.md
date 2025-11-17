@@ -53,6 +53,29 @@ A modelagem de classes é o ponto central deste projeto, desenhada para demonstr
 | **InventarioManager** | Serviço / Composição | Gerencia a lista de todas as `Acomodacoes`, aplicando bloqueios de manutenção e consultando disponibilidade. |
 ---
 
+## 📂 Estrutura de arquivos e pastas
+
+.
+├── src/                       
+│   └── hotelwise/                
+│       ├── core/               
+│       │   ├── entities/       
+│       │   └── exceptions.py
+│       │
+│       ├── services/             
+│       │   └── inventario_manager.py
+│       │
+│       ├── persistence/          
+│       │   └── data_manager.py
+│       │
+│       └── cli/                
+│           └── cli_interface.py
+│
+├── tests/                      
+├── main.py                      
+├── requirements.txt
+├── README.md
+
 ## Autor
 
 * **Malaquias de oliveira** (GitHub: nascimentooliveira-lab)
