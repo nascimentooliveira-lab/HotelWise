@@ -53,6 +53,133 @@ A modelagem de classes é o ponto central deste projeto, desenhada para demonstr
 | **InventarioManager** | Serviço / Composição | Gerencia a lista de todas as `Acomodacoes`, aplicando bloqueios de manutenção e consultando disponibilidade. |
 ---
 
+## 🏨 UML Textual — Sistema de Hospedagem
+
+## Classe: Pessoa (Classe Base)
+
+Atributos
+nome : String
+contato : String
+
+Métodos
+atualizarContato(contato)
+obterDados() : String
+
+Relacionamentos
+Superclasse de Hospede e Funcionario (Herança)
+
+## Classe: Hospede (extends Pessoa)
+
+Atributos
+idHospede : int
+documento : String
+historicoReservas : List<Reserva>
+
+Métodos
+adicionarReserva(reserva : Reserva)
+listarHistorico() : List<Reserva>
+
+Relacionamentos
+Herdada de Pessoa
+Hospede possui várias Reservas (0..*)
+
+## Classe: Funcionario (extends Pessoa) (opcional, mas previsto pelo conceito)
+
+Atributos
+idFuncionario : int
+cargo : String
+
+Métodos
+registrarCheckIn(reserva : Reserva)
+registrarCheckOut(reserva : Reserva)
+
+Relacionamentos
+Herdada de Pessoa
+
+## Classe: Acomodacao (Classe Base Encapsulada)
+
+Atributos
+idAcomodacao : int
+numero : String
+status : String // disponível, ocupado, bloqueado
+capacidade : int
+
+Métodos
+setStatus(status : String) // protegido
+getStatus() : String
+calcularTarifaBase() : double
+
+Relacionamentos
+Superclasse de QuartoSimples e QuartoDeluxe
+Gerenciada por InventarioManager
+
+## Classe: QuartoSimples (extends Acomodacao)
+Atributos
+tarifaBase : double
+
+Métodos
+calcularTarifaBase() : double
+
+## Classe: QuartoDeluxe (extends Acomodacao)
+
+Atributos
+tarifaBase : double
+vista : String
+frigobar : boolean
+
+Métodos
+calcularTarifaBase() : double
+
+## Classe: Tarifa (Composição)
+
+Atributos
+valorBase : double
+taxas : double
+descontos : double
+
+Métodos
+calcularTotal() : double
+
+Relacionamentos
+Composta dentro de Reserva (1..1, composição)
+
+## Classe: Reserva
+
+Atributos
+idReserva : int
+dataCheckIn : Date
+dataCheckOut : Date
+status : String
+acomodacao : Acomodacao
+tarifa : Tarifa
+
+Métodos
+validarDatas()
+calcularValorFinal() : double
+realizarCheckIn()
+realizarCheckOut()
+
+Relacionamentos
+
+1 Reserva possui 1 Acomodacao
+1 Reserva compõe 1 Tarifa
+1 Reserva pertence a 1 Hospede
+
+## Classe: InventarioManager (Serviço)
+
+Atributos
+listaAcomodacoes : List<Acomodacao>
+
+Métodos
+consultarDisponibilidade(dataInicio, dataFim) : List<Acomodacao>
+bloquearAcomodacao(acomodacao : Acomodacao)
+liberarAcomodacao(acomodacao : Acomodacao)
+registrarOcupacao(acomodacao : Acomodacao)
+
+Relacionamentos
+1 InventarioManager gerencia muitas Acomodacoes
+Interage com Reserva durante validações
+
 ## Autor
 
 * **Malaquias de oliveira** (GitHub: nascimentooliveira-lab)
