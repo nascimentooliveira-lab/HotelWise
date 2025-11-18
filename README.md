@@ -4,7 +4,7 @@
 
 O HotelWise é um sistema de gerenciamento de reservas e inventário de hotéis, focado em fornecer uma solução robusta para o controle de acomodações e hóspedes.
 
-O projeto pode ser acessado via Interface de Linha de Comando (CLI) para gestão interna, ou opcionalmente exposto como uma API mínima (usando FastAPI/Flask) para consumo por outras aplicações. A implementação enfatiza  boas práticas de Orientação a Objetos, garantindo alta modularidade e facilidade de manutenção.
+O projeto pode ser acessado via Interface de Linha de Comando (CLI) para gestão interna, ou opcionalmente exposto como uma API mínima usando **FastAPI** para consumo por outras aplicações. A implementação enfatiza  boas práticas de Orientação a Objetos, garantindo alta modularidade e facilidade de manutenção.
 
 
 # Objetivos do Projeto e Foco Técnico
@@ -16,7 +16,7 @@ Este projeto possui um duplo foco: entregar um produto funcional e servir como u
 | **Arquitetura** | Desenvolver um sistema modular com forte aplicação de princípios de **Orientação a Objetos** (Herança, Encapsulamento, Composição e Polimorfismo). |
 | **Funcionalidades** | Implementar o ciclo completo de reserva, incluindo **check-in/check-out**, **política de cancelamento** e **bloqueios** de quartos por manutenção. |
 | **Modelagem** | Gerenciar a complexidade de **tarifas por temporada** e fornecer **relatórios de desempenho** (Taxa de Ocupação, ADR, RevPAR). |
-| **Persistência** | Utilizar soluções simples e leves de persistência de dados: **JSON** ou **SQLite** (a ser definida na fase inicial). |
+| **Persistência** | Utilizar soluções simples e leves de persistência de dados:**SQLite** |
 **Interface** | `argparse` (Python) | Para construção da Interface de Linha de Comando (CLI). |
 ---
 
