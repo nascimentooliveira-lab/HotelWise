@@ -59,97 +59,97 @@ A modelagem de classes é o ponto central deste projeto, desenhada para demonstr
 
 ## Classe: Pessoa (Classe Base)
 
-Atributos
+Atributos:
 nome, contato, email
 
-Métodos
+Métodos:
 atualizarContato(contato), obterDados()
 
-Relacionamentos
+Relacionamentos:
 Superclasse de Hospede e Funcionario (Herança)
 
 ## Classe: Hospede (extends Pessoa)
 
-Atributos
+Atributos:
 idHospede, documento, historicoReservas
 
-Métodos
+Métodos:
 adicionarReserva, listarHistorico()
 
-Relacionamentos
+Relacionamentos:
 Herdada de Pessoa
 Hospede possui várias Reservas ()
 
 ## Classe: Funcionario (extends Pessoa) 
 
-Atributos
+Atributos:
 idFuncionario, cargo
 
-Métodos
+Métodos:
 registrarCheckIn, registrarCheckOut
 
-Relacionamentos
+Relacionamentos:
 Herdada de Pessoa
 
 ## Classe: Acomodacao (Classe Base Encapsulada)
 
-Atributos
+Atributos:
 idAcomodacao, numero, status : (disponível, ocupado, bloqueado), capacidade
 
-Métodos
+Métodos:
 setStatus: (protegido), getStatus(), calcularTarifaBase()
 
-Relacionamentos
+Relacionamentos:
 Superclasse de QuartoSimples e QuartoDeluxe, Gerenciada por InventarioManager
 
 ## Classe: QuartoSimples (extends Acomodacao)
-Atributos
+Atributos:
 tarifaBase
 
-Métodos
+Métodos:
 calcularTarifaBase()
 
 ## Classe: QuartoDeluxe (extends Acomodacao)
 
-Atributos
+Atributos:
 tarifaBase, vista
 
-Métodos
+Métodos:
 calcularTarifaBase() 
 
 ## Classe: Tarifa (Composição)
 
-Atributos
+Atributos:
 valorBase, taxas, descontos 
 
-Métodos
+Métodos:
 calcularTotal()
 
-Relacionamentos
+Relacionamentos:
 Composta dentro de Reserva ()
 
 ## Classe: Reserva
 
-Atributos, idReserva, dataCheckIn, dataCheckOut, status, acomodacao, tarifa
+Atributos:
+idReserva, dataCheckIn, dataCheckOut, status, acomodacao, tarifa
 
-Métodos
+Métodos:
 validarDatas(), calcularValorFinal(), realizarCheckIn(), realizarCheckOut()
 
-Relacionamentos
-
+Relacionamentos:
 1 Reserva possui 1 Acomodacao
 1 Reserva compõe 1 Tarifa
 1 Reserva pertence a 1 Hospede
 
 ## Classe: InventarioManager (Serviço)
 
-Atributos
+Atributos:
 listaAcomodacoes : List<Acomodacao>
 
-Métodos
+Métodos:
 consultarDisponibilidade(dataInicio, dataFim), bloquearAcomodacao, liberarAcomodacao, registrarOcupacao
 
-Relacionamentos
+Relacionamentos:
 1 InventarioManager gerencia muitas Acomodacoes, Interage com Reserva durante validações
 
 ## Autor
