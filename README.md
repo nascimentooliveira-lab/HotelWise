@@ -22,8 +22,10 @@ Este projeto possui um duplo foco: entregar um produto funcional e servir como u
 
 ## ⚙️ Tecnologias e Dependência
 
-
-![Python](https://img.shields.io/badge/PYTHON-3776AB?style=for-the-badge&logo=python&logoColor=white) ![Git](https://img.shields.io/badge/GIT-F05032?style=for-the-badge&logo=git&logoColor=white) ![GitHub](https://img.shields.io/badge/GITHUB-100000?style=for-the-badge&logo=github&logoColor=white)
+![Python](https://img.shields.io/badge/PYTHON-3776AB?style=for-the-badge&logo=python&logoColor=white) 
+![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white) 
+![Git](https://img.shields.io/badge/GIT-F05032?style=for-the-badge&logo=git&logoColor=white) 
+![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
 
 
 ## 🏗️ Estrutura Planejada de Classes
@@ -58,12 +60,10 @@ A modelagem de classes é o ponto central deste projeto, desenhada para demonstr
 ## Classe: Pessoa (Classe Base)
 
 Atributos
-nome : String
-contato : String
+nome, contato, email
 
 Métodos
-atualizarContato(contato)
-obterDados() : String
+atualizarContato(contato), obterDados()
 
 Relacionamentos
 Superclasse de Hospede e Funcionario (Herança)
@@ -71,27 +71,22 @@ Superclasse de Hospede e Funcionario (Herança)
 ## Classe: Hospede (extends Pessoa)
 
 Atributos
-idHospede : int
-documento : String
-historicoReservas : List<Reserva>
+idHospede, documento, historicoReservas
 
 Métodos
-adicionarReserva(reserva : Reserva)
-listarHistorico() : List<Reserva>
+adicionarReserva, listarHistorico()
 
 Relacionamentos
 Herdada de Pessoa
-Hospede possui várias Reservas (0..*)
+Hospede possui várias Reservas ()
 
 ## Classe: Funcionario (extends Pessoa) 
 
 Atributos
-idFuncionario : int
-cargo : String
+idFuncionario, cargo
 
 Métodos
-registrarCheckIn(reserva : Reserva)
-registrarCheckOut(reserva : Reserva)
+registrarCheckIn, registrarCheckOut
 
 Relacionamentos
 Herdada de Pessoa
@@ -99,65 +94,46 @@ Herdada de Pessoa
 ## Classe: Acomodacao (Classe Base Encapsulada)
 
 Atributos
-idAcomodacao : int
-numero : String
-status : String // disponível, ocupado, bloqueado
-capacidade : int
+idAcomodacao, numero, status : (disponível, ocupado, bloqueado), capacidade
 
 Métodos
-setStatus(status : String) // protegido
-getStatus() : String
-calcularTarifaBase() : double
+setStatus: (protegido), getStatus(), calcularTarifaBase()
 
 Relacionamentos
-Superclasse de QuartoSimples e QuartoDeluxe
-Gerenciada por InventarioManager
+Superclasse de QuartoSimples e QuartoDeluxe, Gerenciada por InventarioManager
 
 ## Classe: QuartoSimples (extends Acomodacao)
 Atributos
-tarifaBase : double
+tarifaBase
 
 Métodos
-calcularTarifaBase() : double
+calcularTarifaBase()
 
 ## Classe: QuartoDeluxe (extends Acomodacao)
 
 Atributos
-tarifaBase : double
-vista : String
-frigobar : boolean
+tarifaBase, vista
 
 Métodos
-calcularTarifaBase() : double
+calcularTarifaBase() 
 
 ## Classe: Tarifa (Composição)
 
 Atributos
-valorBase : double
-taxas : double
-descontos : double
+valorBase, taxas, descontos 
 
 Métodos
-calcularTotal() : double
+calcularTotal()
 
 Relacionamentos
-Composta dentro de Reserva (1..1, composição)
+Composta dentro de Reserva ()
 
 ## Classe: Reserva
 
-Atributos
-idReserva : int
-dataCheckIn : Date
-dataCheckOut : Date
-status : String
-acomodacao : Acomodacao
-tarifa : Tarifa
+Atributos, idReserva, dataCheckIn, dataCheckOut, status, acomodacao, tarifa
 
 Métodos
-validarDatas()
-calcularValorFinal() : double
-realizarCheckIn()
-realizarCheckOut()
+validarDatas(), calcularValorFinal(), realizarCheckIn(), realizarCheckOut()
 
 Relacionamentos
 
@@ -171,14 +147,10 @@ Atributos
 listaAcomodacoes : List<Acomodacao>
 
 Métodos
-consultarDisponibilidade(dataInicio, dataFim) : List<Acomodacao>
-bloquearAcomodacao(acomodacao : Acomodacao)
-liberarAcomodacao(acomodacao : Acomodacao)
-registrarOcupacao(acomodacao : Acomodacao)
+consultarDisponibilidade(dataInicio, dataFim), bloquearAcomodacao, liberarAcomodacao, registrarOcupacao
 
 Relacionamentos
-1 InventarioManager gerencia muitas Acomodacoes
-Interage com Reserva durante validações
+1 InventarioManager gerencia muitas Acomodacoes, Interage com Reserva durante validações
 
 ## Autor
 
