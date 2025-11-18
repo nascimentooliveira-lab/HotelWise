@@ -9,7 +9,7 @@ O projeto pode ser acessado via Interface de Linha de Comando (CLI) para gestão
 
 # Objetivos do Projeto e Foco Técnico
 
-Este projeto possui um duplo foco: entregar um produto funcional e servir como um excelente laboratório para conceitos avançados de programação.
+Este projeto possui um duplo foco: entregar um produto funcional e otimizar e automatizar o ciclo de vida de uma reserva, desde a busca inicial pelo hóspede até o controle de inventário e gestão financeira pelo hotel.
 
 | Categoria | Detalhamento |
 | :--- | :--- |
