@@ -80,6 +80,36 @@ class Acomodacao:
     def bloquear(self):
         self.__status = "bloqueado"
 
+class Funcionario(Pessoa):
+    """
+    Representa um funcionário do hotel. Herda de Pessoa.
+    """
+    def __init__(self, nome, cpf, idade, endereco, email, telefone, cargo, salario, departamento):
+        super().__init__(nome, cpf, idade, endereco, email, telefone)
+        self.__cargo = cargo
+        self.__salario = salario
+        self.__departamento = departamento
+        self._historico_atividades = []
+
+    @property
+    def cargo(self):
+        return self.__cargo
+
+    @property
+    def salario(self):
+        return self.__salario
+
+    @property
+    def departamento(self):
+        return self.__departamento
+
+    @property
+    def historico_atividades(self):
+        return list(self._historico_atividades)
+
+    def registrar_atividade(self, atividade):
+        self._historico_atividades.append(atividade)
+        
 class QuartoSimples(Acomodacao):
     """
     Representa um tipo de quarto de tarifa padrão.
