@@ -8,6 +8,14 @@ class Hospede:
         self.documento = documento
         self.email = email
         self.telefone = telefone
+        self.__reservas = []   # << RELACIONAMENTO
+
+    @property
+    def reservas(self):
+        return list(self.__reservas)
+
+    def adicionar_reserva(self, reserva):
+        self.__reservas.append(reserva)
 
     @property
     def nome(self):

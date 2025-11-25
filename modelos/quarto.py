@@ -8,6 +8,14 @@ class Quarto:
         self.capacidade = capacidade
         self.tarifa_base = tarifa_base
         self.status = status
+        self.__reservas = []   # << RELACIONAMENTO
+
+    @property
+    def reservas(self):
+        return list(self.__reservas)
+
+    def adicionar_reserva(self, reserva):
+        self.__reservas.append(reserva)
 
     @property
     def numero(self):

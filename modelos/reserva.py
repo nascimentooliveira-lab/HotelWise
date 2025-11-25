@@ -4,19 +4,28 @@ from modelos.quarto import Quarto
 
 class Reserva:
     """
-    Representa uma reserva básica do hotel (estrutura da Semana 2).
+    Representa uma reserva básica do hotel (estrutura da Semana 2 + relacionamentos).
     """
 
     def __init__(self, hospede: Hospede, quarto: Quarto,
                  data_entrada: date, data_saida: date, numero_hospedes: int):
 
+        # Atribuições principais
         self.hospede = hospede
         self.quarto = quarto
         self.data_entrada = data_entrada
         self.data_saida = data_saida
         self.numero_hospedes = numero_hospedes
 
-    # -------- PROPRIEDADES --------
+        # Agregações (Semana 3)
+        self.__pagamentos = []
+        self.__adicionais = []
+
+        # --- RELACIONAMENTO PRINCIPAL ---
+        # Registra a reserva dentro do hospede e do quarto
+        hospede.adicionar_reserva(self)
+        quarto.adicionar_reserva(self)
+
 
     @property
     def hospede(self):
@@ -72,9 +81,24 @@ class Reserva:
             raise ValueError("Número de hóspedes excede a capacidade do quarto.")
         self.__numero_hospedes = valor
 
-    # -------- MÉTODO ESPECIAL --------
+    # -------------------- AGREGADOS --------------------
+
+    @property
+    def pagamentos(self):
+        return list(self.__pagamentos)
+
+    def adicionar_pagamento(self, pagamento):
+        self.__pagamentos.append(pagamento)
+
+    @property
+    def adicionais(self):
+        return list(self.__adicionais)
+
+    def adicionar_adicional(self, adicional):
+        self.__adicionais.append(adicional)
+
+    # -------------------- MÉTODO ESPECIAL --------------------
 
     def __len__(self):
         """Retorna o número de diárias."""
         return (self.data_saida - self.data_entrada).days
-
