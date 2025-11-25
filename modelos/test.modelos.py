@@ -31,8 +31,9 @@ def test_criar_reserva():
     h = Hospede("João", "777", "joao@mail.com", "9999")
     q = Quarto(101, "DUPLO", 2, 200)
 
-    r = Reserva(h, q, date(2025, 1, 10), date(2025, 1, 12), 2)
+    r = Reserva(h, q, date(2025, 1, 10), date(2025, 1, 12))  # Estado padrão
 
     assert len(r) == 2
     assert r.quarto.capacidade == 2
     assert r.hospede.nome == "João"
+
