@@ -9,6 +9,9 @@ class Quarto:
         self.tarifa_base = tarifa_base
         self.status = status
         self.__reservas = []   # << RELACIONAMENTO
+        self.__motivo_bloqueio = None
+        self.__inicio_bloqueio = None
+        self.__fim_bloqueio = None
 
     @property
     def reservas(self):
@@ -66,6 +69,35 @@ class Quarto:
         if valor.upper() not in Quarto.STATUS_VALIDOS:
             raise ValueError("Status inválido.")
         self.__status = valor.upper()
+    
+    @property
+    def periodo_bloqueio(self):
+        return (self.__inicio_bloqueio, self.__fim_bloqueio)
+
+    def bloquear(self, motivo: str, inicio: date, fim: date):
+        """Bloqueia o quarto para manutenção ou outro motivo."""
+        if inicio > fim:
+            raise ValueError("Data inicial não pode ser maior que a data final.")
+
+        self.status = "MANUTENCAO"
+        self.__motivo_bloqueio = motivo
+        self.__inicio_bloqueio = inicio
+        self.__fim_bloqueio = fim
+
+    def desbloquear(self):
+        """Remove bloqueio e devolve o quarto como DISPONIVEL."""
+        self.status = "DISPONIVEL"
+        self.__motivo_bloqueio = None
+        self.__inicio_bloqueio = None
+        self.__fim_bloqueio = None
+
+    def esta_bloqueado(self, data: date) -> bool:
+        """Verifica se o quarto está bloqueado em uma data."""
+        if self.status != "MANUTENCAO":
+            return False
+        if not self.__inicio_bloqueio or not self.__fim_bloqueio:
+            return False
+        return self.__inicio_bloqueio <= data <= self.__fim_bloqueio
 
     # --- Métodos Especiais ---
     def __str__(self):
