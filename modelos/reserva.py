@@ -109,6 +109,39 @@ class Reserva:
             raise ValueError(f"Estado deve ser um de: {self.ESTADOS_VALIDOS}")
         self.estado = novo_estado
 
+        # --- Check-in ---
+    def pode_fazer_checkin(self, data_hoje: date, tolerancia_dias=0) -> bool:
+        if self.estado != "CONFIRMADA":
+            return False
+        delta = (data_hoje - self.data_entrada).days
+        return -tolerancia_dias <= delta <= tolerancia_dias
+
+    def fazer_checkin(self, data_hoje: date, tolerancia_dias=0):
+        if not self.pode_fazer_checkin(data_hoje, tolerancia_dias):
+            raise ValueError("Check-in não permitido: estado deve ser CONFIRMADA e data correta.")
+        self.estado = "CHECKIN"
+
+    # --- Check-out ---
+    def fazer_checkout(self, data_saida_real: date, adicionais_valores=[], valor_diaria_extra=None):
+        if self.estado != "CHECKIN":
+            raise ValueError("Check-out só permitido após check-in.")
+
+        # Calcula diárias extras por atraso
+        extras = 0
+        if data_saida_real > self.data_saida:
+            dias_extras = (data_saida_real - self.data_saida).days
+            if valor_diaria_extra is None:
+                valor_diaria_extra = self.quarto.tarifa_base
+            extras = dias_extras * valor_diaria_extra
+
+        # Soma adicionais
+        total_adicionais = sum(adicionais_valores)
+
+        valor_final = self.valor_total() + total_adicionais + extras
+        self.estado = "CHECKOUT"
+        return round(valor_final, 2)
+
+
     def __validar_disponibilidade(self, quarto: Quarto):
         """Impede overbooking verificando reservas existentes."""
         for r in quarto.reservas:
