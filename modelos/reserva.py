@@ -4,7 +4,7 @@ from modelos.quarto import Quarto
 
 class Reserva:
     """
-    Representa uma reserva básica do hotel (estrutura da Semana 2 + relacionamentos).
+    Representa uma reserva básica do hotel.
     """
 
     def __init__(self, hospede: Hospede, quarto: Quarto,
