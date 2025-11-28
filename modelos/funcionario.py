@@ -1,4 +1,4 @@
-from pessoa import Pessoa
+from .pessoa import Pessoa
 
 class Funcionario(Pessoa):
     """

@@ -1,6 +1,6 @@
 from datetime import date, timedelta
-from modelos.hospede import Hospede
-from modelos.quarto import Quarto
+from .hospede import Hospede
+from .quarto import Quarto
 
 
 class Reserva:
@@ -190,8 +190,6 @@ class Reserva:
 
     def adicionar_adicional(self, adicional):
         self.__adicionais.append(adicional)
-
-    # MÉTODOS ESPECIAIS
 
     def __len__(self):
         """Número de diárias."""

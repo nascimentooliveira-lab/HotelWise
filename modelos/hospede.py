@@ -1,4 +1,4 @@
-from pessoa import pessoa 
+from .pessoa import pessoa 
 class Hospede(pessoa):
     """
     Representa um hóspede do hotel.
