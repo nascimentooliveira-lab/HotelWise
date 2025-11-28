@@ -20,8 +20,8 @@ class Reserva:
     ORIGENS_VALIDAS = {"SITE", "TELEFONE", "BALCAO"}
 
     def __init__(self, hospede: Hospede, quarto: Quarto,
-                 data_entrada: date, data_saida: date,
-                 numero_hospedes: int, origem: str = "SITE"):
+             data_entrada: date, data_saida: date,
+             numero_hospedes: int = 1, origem: str = "SITE"):
 
         self.hospede = hospede
         self.quarto = quarto

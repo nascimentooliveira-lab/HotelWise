@@ -1,3 +1,4 @@
+from datetime import date
 class Quarto:
     TIPOS_VALIDOS = {"SIMPLES", "DUPLO", "LUXO"}
     STATUS_VALIDOS = {"DISPONIVEL", "OCUPADO", "MANUTENCAO", "BLOQUEADO"}
@@ -106,4 +107,7 @@ class Quarto:
     def __lt__(self, other):
         if not isinstance(other, Quarto):
             return NotImplemented
+        
         return (self.tipo, self.numero) < (other.tipo, other.numero)
+    def __lt__(self, other):
+        return self.numero < other.numero
