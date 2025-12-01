@@ -121,31 +121,33 @@ class Reserva:
             raise ValueError("Check-in não permitido: estado deve ser CONFIRMADA e data correta.")
         self.estado = "CHECKIN"
 
-    # --- Check-out ---
-    def fazer_checkout(self, data_saida_real: date, adicionais_valores=[], valor_diaria_extra=None):
+    def fazer_checkout(self, data_saida_real: date):
         if self.estado != "CHECKIN":
             raise ValueError("Check-out só permitido após check-in.")
 
-        # Calcula diárias extras por atraso
-        extras = 0
-        if data_saida_real > self.data_saida:
-            dias_extras = (data_saida_real - self.data_saida).days
-            if valor_diaria_extra is None:
-                valor_diaria_extra = self.quarto.tarifa_base
-            extras = dias_extras * valor_diaria_extra
+        valor_final = self.total_devido(data_saida_real)
 
-        # Soma adicionais
-        total_adicionais = sum(adicionais_valores)
+        if self.total_pago() < valor_final:
+            raise ValueError(
+               f"Pagamento insuficiente. Total devido: {valor_final:.2f}, "
+               f"total pago: {self.total_pago():.2f}"
+            )
 
-        valor_final = self.valor_total() + total_adicionais + extras
         self.estado = "CHECKOUT"
-        return round(valor_final, 2)
-
+        return valor_final
 
     def __validar_disponibilidade(self, quarto: Quarto):
         """Impede overbooking verificando reservas existentes."""
+        
+        ESTADOS_BLOQUEANTES = {"PENDENTE", "CONFIRMADA", "CHECKIN"}
+
         for r in quarto.reservas:
-            # Se datas se sobrepõem → conflito
+            
+            # Se a reserva existente não está em um estado bloqueante, ela é ignorada.
+            if r.estado not in ESTADOS_BLOQUEANTES:
+                continue
+                
+            # Se datas se sobrepõem → conflito (Overbooking)
             if not (self.data_saida <= r.data_entrada or self.data_entrada >= r.data_saida):
                 raise ValueError(
                     f"Quarto {quarto.numero} indisponível no período solicitado."
@@ -174,6 +176,22 @@ class Reserva:
             atual += timedelta(days=1)
 
         return round(total, 2)
+    
+    def total_pago(self):
+        return sum(p.valor for p in self.__pagamentos)
+
+    def total_adicionais(self):
+        return sum(a.valor for a in self.__adicionais)
+
+    def total_devido(self, data_saida_real=None):
+        total = self.valor_total() + self.total_adicionais()
+
+        if data_saida_real and data_saida_real > self.data_saida:
+             dias_extras = (data_saida_real - self.data_saida).days
+             total += dias_extras * self.quarto.tarifa_base
+
+        return round(total, 2)
+
 
     # AGREGADOS
 
