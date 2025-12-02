@@ -1,4 +1,6 @@
 from datetime import date
+import sqlite3
+
 class Quarto:
     TIPOS_VALIDOS = {"SIMPLES", "DUPLO", "LUXO"}
     STATUS_VALIDOS = {"DISPONIVEL", "OCUPADO", "MANUTENCAO", "BLOQUEADO"}

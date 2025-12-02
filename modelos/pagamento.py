@@ -1,4 +1,5 @@
 from datetime import datetime
+import sqlite3
 
 class Pagamento:
     """
