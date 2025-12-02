@@ -1,94 +1,92 @@
 from datetime import date, timedelta
 import sqlite3
-import os
 
-DATABASE_NAME = 'hotelwise.db'
+DATABASE_NAME = "hotelwise.db"
 
-" " " configura o retorno por nome da coluna."""
-    
+
 def get_db_connection():
-
-    try:
-        conn = sqlite3.connect(DATABASE_NAME)
-        conn.row_factory = sqlite3.Row # Permite acesso por nome
-        return conn
-    
-    except sqlite3.Error as e:
-        print(f"Erro ao conectar ao banco de dados: {e}")
-        raise
+    conn = sqlite3.connect(DATABASE_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def _criar_tabelas(conn):
+    cursor = conn.cursor()
 
-  cursor = conn.cursor()
-  cursor.execute("""
-      CREATE TABLE IF NOT EXISTS quartos (
-         numero INTEGER PRIMARY KEY,
-         tipo TEXT NOT NULL,
-         capacidade INTEGER NOT NULL,
-         tarifa_base REAL NOT NULL,
-         status TEXT NOT NULL,
-         bloqueio_inicio TEXT,         
-         bloqueio_fim TEXT
-      );
-  """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS quartos (
+            numero INTEGER PRIMARY KEY,
+            tipo TEXT NOT NULL,
+            capacidade INTEGER NOT NULL,
+            tarifa_base REAL NOT NULL,
+            status TEXT NOT NULL,
+            motivo_bloqueio TEXT,
+            bloqueio_inicio TEXT,
+            bloqueio_fim TEXT
+        );
+    """)
 
-  cursor.execute("""
-      CREATE TABLE IF NOT EXISTS hospedes (
-         id INTEGER PRIMARY KEY AUTOINCREMENT,
-         nome TEXT NOT NULL,
-         documento TEXT UNIQUE NOT NULL, 
-         email TEXT,
-         telefone TEXT
-      );
-  """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS hospedes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            documento TEXT UNIQUE NOT NULL,
+            email TEXT,
+            telefone TEXT
+        );
+    """)
 
-  cursor.execute("""
-      CREATE TABLE IF NOT EXISTS reservas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        hospede_id INTEGER NOT NULL,          -- Chave estrangeira para Hospedes
-        quarto_numero INTEGER NOT NULL,       -- Chave estrangeira para Quartos
-        data_entrada TEXT NOT NULL,
-        data_saida TEXT NOT NULL,
-        num_hospedes INTEGER NOT NULL,
-        estado TEXT NOT NULL,
-        origem TEXT NOT NULL,
-        valor_total REAL,                     -- Valor calculado (deve ser persistido)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reservas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hospede_id INTEGER NOT NULL,
+            quarto_numero INTEGER NOT NULL,
+            data_entrada TEXT NOT NULL,
+            data_saida TEXT NOT NULL,
+            num_hospedes INTEGER NOT NULL,
+            estado TEXT NOT NULL,
+            origem TEXT NOT NULL,
+            valor_total REAL,
 
-        FOREIGN KEY (hospede_id) REFERENCES hospedes(id),
-        FOREIGN KEY (quarto_numero) REFERENCES quartos(numero)
-      );
-  """)
+            FOREIGN KEY (hospede_id) REFERENCES hospedes(id),
+            FOREIGN KEY (quarto_numero) REFERENCES quartos(numero)
+        );
+    """)
 
-  cursor.execute("""
-      CREATE TABLE IF NOT EXISTS pagamentos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        reserva_id INTEGER NOT NULL,
-        valor REAL NOT NULL,
-        forma TEXT NOT NULL,
-        data TEXT NOT NULL,  -- Usaremos ISO format (YYYY-MM-DD HH:MM:SS)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pagamentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reserva_id INTEGER NOT NULL,
+            valor REAL NOT NULL,
+            forma TEXT NOT NULL,
+            data TEXT NOT NULL,
 
-        FOREIGN KEY (reserva_id) REFERENCES reservas(id)
-      );
-  """)
+            FOREIGN KEY (reserva_id) REFERENCES reservas(id)
+        );
+    """)
 
-  conn.commit()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS temporadas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            data_inicio TEXT NOT NULL,
+            data_fim TEXT NOT NULL,
+            fator_multiplicador REAL NOT NULL
+        );
+    """)
 
-  def seed_dados():
-    """Cria tabelas e insere dados iniciais de Quartos e Temporadas se estiverem vazios."""
-    
+    conn.commit()
+
+def seed_dados():
+    print("🔧 Rodando SEED da base de dados...")
+
     conn = get_db_connection()
     _criar_tabelas(conn)
     cursor = conn.cursor()
 
-    print("Iniciando rotina de persistência (seed)...")
-
-    # Seed de Quartos
+    # QUARTOS
     cursor.execute("SELECT COUNT(*) FROM quartos")
     if cursor.fetchone()[0] == 0:
         quartos_seed = [
-
-            # (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim)
-
             (101, "SIMPLES", 1, 120.00, "DISPONIVEL", None, None, None),
             (102, "SIMPLES", 1, 120.00, "DISPONIVEL", None, None, None),
             (201, "DUPLO", 2, 180.00, "DISPONIVEL", None, None, None),
@@ -98,15 +96,14 @@ def _criar_tabelas(conn):
             (401, "LUXO", 5, 450.00, "DISPONIVEL", None, None, None),
         ]
         cursor.executemany("""
-            INSERT INTO quartos (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim) 
+            INSERT INTO quartos (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, quartos_seed)
-        print(f" Seed concluída: {len(quartos_seed)} quartos criados.")
+        print(" Quartos inseridos.")
     else:
-        print("Quartos já populados.")
-    
-    # Seed de Temporadas
+        print(" Quartos já existiam.")
 
+    # TEMPORADAS
     cursor.execute("SELECT COUNT(*) FROM temporadas")
     if cursor.fetchone()[0] == 0:
         temporadas_seed = [
@@ -115,34 +112,25 @@ def _criar_tabelas(conn):
             ("Alta", "2025-12-15", "2026-02-28", 1.50),
         ]
         cursor.executemany("""
-            INSERT INTO temporadas (nome, data_inicio, data_fim, fator_multiplicador) 
+            INSERT INTO temporadas (nome, data_inicio, data_fim, fator_multiplicador)
             VALUES (?, ?, ?, ?)
         """, temporadas_seed)
-        print(f" Seed concluída: {len(temporadas_seed)} temporadas criadas.")
+        
+        print(" Temporadas inseridas.")
     else:
-        print("Temporadas já populadas.")
-    
+        print(" Temporadas já existiam.")
+
     conn.commit()
     conn.close()
-    print("Rotina de persistência finalizada.")
-
-
-    from datetime import date, timedelta
+    print(" SEED finalizado.")
 
 def relatorio_ocupacao(inicio: date, fim: date):
-    """
-    Gera relatório de ocupação diária entre duas datas (fim não incluso).
-    Retorna um dicionário: { data: {ocupados, livres, taxa} }
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 1. Total de quartos cadastrados
     cursor.execute("SELECT COUNT(*) as total FROM quartos")
     total_quartos = cursor.fetchone()["total"]
 
-    # Busca reservas que INTERSECTAM o período
-    
     cursor.execute("""
         SELECT quarto_numero, data_entrada, data_saida
         FROM reservas
@@ -150,10 +138,8 @@ def relatorio_ocupacao(inicio: date, fim: date):
     """, (inicio.isoformat(), fim.isoformat()))
 
     reservas = cursor.fetchall()
-
     conn.close()
 
-    # Monta relatório dia a dia
     relatorio = {}
     dia = inicio
 
@@ -164,17 +150,16 @@ def relatorio_ocupacao(inicio: date, fim: date):
             entrada = date.fromisoformat(r["data_entrada"])
             saida = date.fromisoformat(r["data_saida"])
 
-            # Este quarto está ocupado neste dia?
             if entrada <= dia < saida:
                 ocupados += 1
 
         livres = total_quartos - ocupados
-        taxa = (ocupados / total_quartos * 100) if total_quartos > 0 else 0
+        taxa = round((ocupados / total_quartos * 100), 2) if total_quartos > 0 else 0
 
         relatorio[dia] = {
             "ocupados": ocupados,
             "livres": livres,
-            "taxa_ocupacao": round(taxa, 2)
+            "taxa_ocupacao": taxa
         }
 
         dia += timedelta(days=1)
