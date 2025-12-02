@@ -83,7 +83,6 @@ def seed_dados():
     _criar_tabelas(conn)
     cursor = conn.cursor()
 
-    # QUARTOS
     cursor.execute("SELECT COUNT(*) FROM quartos")
     if cursor.fetchone()[0] == 0:
         quartos_seed = [
@@ -99,11 +98,12 @@ def seed_dados():
             INSERT INTO quartos (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, quartos_seed)
+
         print(" Quartos inseridos.")
     else:
         print(" Quartos já existiam.")
 
-    # TEMPORADAS
+    #TEMPORADAS
     cursor.execute("SELECT COUNT(*) FROM temporadas")
     if cursor.fetchone()[0] == 0:
         temporadas_seed = [
@@ -119,6 +119,40 @@ def seed_dados():
         print(" Temporadas inseridas.")
     else:
         print(" Temporadas já existiam.")
+
+    #HÓSPEDES
+    cursor.execute("SELECT COUNT(*) FROM hospedes")
+    if cursor.fetchone()[0] == 0:
+        hospedes_seed = [
+            ("João Silva", "123.456.789-00", "joao@email.com", "5511987654321"),
+            ("Maria Souza", "987.654.321-00", "maria@email.com", "5511999998888"),
+        ]
+        cursor.executemany("""
+            INSERT INTO hospedes (nome, documento, email, telefone)
+            VALUES (?, ?, ?, ?)
+        """, hospedes_seed)
+        print(" Hóspedes inseridos.")
+    else:
+        print(" Hóspedes já existiam.")
+    
+    #RESERVAS
+    cursor.execute("SELECT COUNT(*) FROM reservas")
+    if cursor.fetchone()[0] == 0:
+        # Usaremos hospede_id 1 e 2.
+        reservas_seed = [
+            # Reserva 1: Quarto 201 (Ocupa 2025-12-03, 04, 05, 06)
+            (1, 201, '2025-12-03', '2025-12-07', 2, "CONFIRMADA", "WEB", 720.00), 
+            # Reserva 2: Quarto 401 (Ocupa 2025-12-01, 02, 03)
+            (2, 401, '2025-12-01', '2025-12-04', 3, "CHECK_IN", "TELEFONE", 1350.00),
+        ]
+        cursor.executemany("""
+            INSERT INTO reservas (hospede_id, quarto_numero, data_entrada, data_saida, num_hospedes, estado, origem, valor_total)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, reservas_seed)
+        print(" Reservas de teste inseridas.")
+    else:
+        print(" Reservas já existiam.")
+
 
     conn.commit()
     conn.close()

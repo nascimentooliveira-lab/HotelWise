@@ -1,7 +1,7 @@
 import pytest
-from modelos.quarto import Quarto
-from modelos.hospede import Hospede
-from modelos.reserva import Reserva
+from .quarto import Quarto
+from .hospede import Hospede
+from .reserva import Reserva
 from datetime import date
 
 
