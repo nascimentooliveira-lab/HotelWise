@@ -111,3 +111,35 @@ class Quarto:
         return (self.tipo, self.numero) < (other.tipo, other.numero)
     def __lt__(self, other):
         return self.numero < other.numero
+    
+    def to_tuple(self):
+        """Converte o objeto Quarto em uma tupla para comandos SQL."""
+        # A ordem deve corresponder aos campos na tabela (exceto a chave PK se for UPDATE)
+        return (
+            self.numero,
+            self.tipo,
+            self.capacidade,
+            self.tarifa_base,
+            self.status,
+            self.__motivo_bloqueio,
+            inicio_str,
+            fim_str
+        )
+
+    @staticmethod
+    def from_db_row(row: sqlite3.Row):
+        """Cria um objeto Quarto a partir de uma linha retornada pelo DB."""
+        
+        # Cria a instância usando os dados básicos do DB
+        quarto = Quarto(
+            numero=row['numero'],
+            tipo=row['tipo'],
+            capacidade=row['capacidade'],
+            tarifa_base=row['tarifa_base'],
+            status=row['status']
+        )
+        quarto._Quarto__motivo_bloqueio = row['motivo_bloqueio']
+        quarto._Quarto__inicio_bloqueio = inicio_date
+        quarto._Quarto__fim_bloqueio = fim_date
+        
+        return quarto

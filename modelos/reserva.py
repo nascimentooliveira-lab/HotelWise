@@ -216,3 +216,45 @@ class Reserva:
     def __str__(self):
         return f"Reserva de {self.hospede.nome} no quarto {self.quarto.numero}"
 
+    # --- MÉTODOS DE PERSISTÊNCIA ---
+    
+    #data.isoformat() para garantir o formato 'YYYY-MM-DD'
+    
+    def to_tuple(self):
+        """Converte o objeto Reserva em uma tupla para comandos SQL."""
+        return (
+            self.hospede.id,            # Chave estrangeira (ID do hospede)
+            self.quarto.numero,         # Chave estrangeira (Numero do quarto)
+            self.data_entrada.isoformat(),
+            self.data_saida.isoformat(),
+            self.numero_hospedes,
+            self.estado,
+            self.origem,
+            self.valor_total,
+            self.id # Incluído para UPDATE no final
+        )
+
+    @staticmethod
+    def from_db_row(row: sqlite3.Row):
+        """
+        Cria uma Reserva a partir de uma linha do DB. 
+        """ 
+        # Cria objetos Hospede e Quarto simplificados para evitar dependência cíclica
+        
+        hospede_dummy = type('Hospede', (object,), {'id': row['hospede_id']})()
+        quarto_dummy = type('Quarto', (object,), {'numero': row['quarto_numero']})()
+
+        # O datetime.date deve ser importado e usado para converter a string de volta para date
+        from datetime import date
+        
+        return Reserva(
+            id=row['id'],
+            hospede=hospede_dummy, # Objeto com ID, mas sem nome, doc, etc.
+            quarto=quarto_dummy,   # Objeto com Numero, mas sem tipo, tarifa, etc.
+            data_entrada=date.fromisoformat(row['data_entrada']),
+            data_saida=date.fromisoformat(row['data_saida']),
+            numero_hospedes=row['num_hospedes'],
+            estado=row['estado'],
+            origem=row['origem'],
+            valor_total=row['valor_total']
+        )
