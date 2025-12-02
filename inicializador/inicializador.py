@@ -1,5 +1,5 @@
 
-from dados import seed_dados
+from persistencia.dados import seed_dados
 
 def inicializar_aplicacao():
     """
@@ -10,10 +10,9 @@ def inicializar_aplicacao():
     try:
         # Chama a rotina que cria o arquivo hotelwise.db, tabelas e dados iniciais
         seed_dados() 
-        print("✅ Inicialização do Banco de Dados concluída com sucesso.")
+        print(" Inicialização do Banco de Dados concluída com sucesso.")
     except Exception as e:
         print(f"❌ ERRO FATAL ao inicializar o banco de dados: {e}")
-        # É crucial retornar ou levantar a exceção se o DB falhar
         return
 
 if __name__ == "__main__":
