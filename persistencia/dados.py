@@ -70,7 +70,6 @@ def _criar_tabelas(conn):
       );
   """)
 
-
   conn.commit()
 
   def seed_dados():
@@ -86,7 +85,9 @@ def _criar_tabelas(conn):
     cursor.execute("SELECT COUNT(*) FROM quartos")
     if cursor.fetchone()[0] == 0:
         quartos_seed = [
+
             # (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim)
+
             (101, "SIMPLES", 1, 120.00, "DISPONIVEL", None, None, None),
             (102, "SIMPLES", 1, 120.00, "DISPONIVEL", None, None, None),
             (201, "DUPLO", 2, 180.00, "DISPONIVEL", None, None, None),
@@ -99,11 +100,12 @@ def _criar_tabelas(conn):
             INSERT INTO quartos (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, quartos_seed)
-        print(f"✅ Seed concluída: {len(quartos_seed)} quartos criados.")
+        print(f" Seed concluída: {len(quartos_seed)} quartos criados.")
     else:
         print("Quartos já populados.")
     
     # Seed de Temporadas
+
     cursor.execute("SELECT COUNT(*) FROM temporadas")
     if cursor.fetchone()[0] == 0:
         temporadas_seed = [
@@ -115,10 +117,65 @@ def _criar_tabelas(conn):
             INSERT INTO temporadas (nome, data_inicio, data_fim, fator_multiplicador) 
             VALUES (?, ?, ?, ?)
         """, temporadas_seed)
-        print(f"✅ Seed concluída: {len(temporadas_seed)} temporadas criadas.")
+        print(f" Seed concluída: {len(temporadas_seed)} temporadas criadas.")
     else:
         print("Temporadas já populadas.")
     
     conn.commit()
     conn.close()
     print("Rotina de persistência finalizada.")
+
+
+    from datetime import date, timedelta
+
+def relatorio_ocupacao(inicio: date, fim: date):
+    """
+    Gera relatório de ocupação diária entre duas datas (fim não incluso).
+    Retorna um dicionário: { data: {ocupados, livres, taxa} }
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 1. Total de quartos cadastrados
+    cursor.execute("SELECT COUNT(*) as total FROM quartos")
+    total_quartos = cursor.fetchone()["total"]
+
+    # Busca reservas que INTERSECTAM o período
+    
+    cursor.execute("""
+        SELECT quarto_numero, data_entrada, data_saida
+        FROM reservas
+        WHERE NOT (data_saida <= ? OR data_entrada >= ?)
+    """, (inicio.isoformat(), fim.isoformat()))
+
+    reservas = cursor.fetchall()
+
+    conn.close()
+
+    # Monta relatório dia a dia
+    relatorio = {}
+    dia = inicio
+
+    while dia < fim:
+        ocupados = 0
+
+        for r in reservas:
+            entrada = date.fromisoformat(r["data_entrada"])
+            saida = date.fromisoformat(r["data_saida"])
+
+            # Este quarto está ocupado neste dia?
+            if entrada <= dia < saida:
+                ocupados += 1
+
+        livres = total_quartos - ocupados
+        taxa = (ocupados / total_quartos * 100) if total_quartos > 0 else 0
+
+        relatorio[dia] = {
+            "ocupados": ocupados,
+            "livres": livres,
+            "taxa_ocupacao": round(taxa, 2)
+        }
+
+        dia += timedelta(days=1)
+
+    return relatorio
