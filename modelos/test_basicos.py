@@ -40,3 +40,29 @@ def test_criar_reserva():
     assert r.quarto.capacidade == 2
     assert r.hospede.nome == "João"
 
+def criar_reserva_basica():
+    h = Hospede(id=1, nome="Teste", telefone="0000")
+    q = Quarto(numero=1, tipo="SIMPLES", capacidade=2, tarifa_base=100)
+    return Reserva(h, q, date(2025,1,10), date(2025,1,12))
+
+def test_confirmar():
+    r = criar_reserva_basica()
+    r.confirmar()
+    assert r.estado == "CONFIRMADA"
+
+def test_checkin():
+    r = criar_reserva_basica()
+    r.confirmar()
+    r.fazer_checkin(date(2025,1,10))
+    assert r.estado == "CHECKIN"
+
+def test_cancelamento():
+    r = criar_reserva_basica()
+    r.cancelar()
+    assert r.estado == "CANCELADA"
+
+def test_no_show():
+    r = criar_reserva_basica()
+    r.confirmar()
+    r.marcar_no_show(date(2025,1,11))
+    assert r.estado == "NO_SHOW"
