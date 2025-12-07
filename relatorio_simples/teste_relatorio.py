@@ -1,5 +1,6 @@
 from datetime import date
-from persistencia.dados import relatorio_ocupacao
+from persistencia.dados import relatorio_ocupacao, seed_dados
+
 
 def imprimir_relatorio_detalhado(rel):
     print("\n=========== RELATÓRIO DE OCUPAÇÃO ===========")
