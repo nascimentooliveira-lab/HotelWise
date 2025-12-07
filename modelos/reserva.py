@@ -5,13 +5,6 @@ from .quarto import Quarto
 
 
 class Reserva:
-    """
-    Representa uma reserva completa do hotel.
-    - Valida capacidade
-    - Impede overbooking
-    - Controla estados
-    - Calcula valor total
-    """
 
     ESTADOS_VALIDOS = {
         "PENDENTE", "CONFIRMADA", "CHECKIN",
@@ -22,14 +15,16 @@ class Reserva:
 
     def __init__(self, hospede: Hospede, quarto: Quarto,
              data_entrada: date, data_saida: date,
-             numero_hospedes: int = 1, origem: str = "SITE"):
-
+             numero_hospedes: int = 1, origem: str = "SITE",
+             estado: str = "PENDENTE", id: int = None):
+        
+        self.id = id
         self.hospede = hospede
         self.quarto = quarto
         self.data_entrada = data_entrada
         self.data_saida = data_saida
         self.numero_hospedes = numero_hospedes
-        self.estado = "PENDENTE"
+        self.estado = estado.upper()
         self.origem = origem.upper()
 
         if self.origem not in self.ORIGENS_VALIDAS:
@@ -102,39 +97,54 @@ class Reserva:
             raise ValueError("Número de hóspedes excede a capacidade do quarto.")
         self.__numero_hospedes = valor
 
-    # MÉTODOS DE NEGÓCIO 
+    # FLUXOS COMPLETOS DO HOTE
+    def confirmar(self):
+        if self.estado != "PENDENTE":
+            raise ValueError("Só é possível confirmar reservas pendentes.")
+        self.estado = "CONFIRMADA"
 
-    def alterar_estado(self, novo_estado: str):
-        novo_estado = novo_estado.upper()
-        if novo_estado not in self.ESTADOS_VALIDOS:
-            raise ValueError(f"Estado deve ser um de: {self.ESTADOS_VALIDOS}")
-        self.estado = novo_estado
+    def cancelar(self, data_hoje: date = date.today()):
+        if self.estado in {"CHECKIN", "CHECKOUT"}:
+           raise ValueError("Não é possível cancelar após check-in.")
+        self.estado = "CANCELADA"
+        self.data_cancelamento = data_hoje
 
-        # --- Check-in ---
-    def pode_fazer_checkin(self, data_hoje: date, tolerancia_dias=0) -> bool:
+    def marcar_no_show(self, data_hoje: date = date.today()):
         if self.estado != "CONFIRMADA":
-            return False
-        delta = (data_hoje - self.data_entrada).days
-        return -tolerancia_dias <= delta <= tolerancia_dias
+           raise ValueError("Só é possível marcar no-show em reservas confirmadas.")
+        if data_hoje <= self.data_entrada:
+           raise ValueError("A data de entrada ainda não passou.")
+        self.estado = "NO_SHOW"
+        self.data_no_show = data_hoje
 
-    def fazer_checkin(self, data_hoje: date, tolerancia_dias=0):
-        if not self.pode_fazer_checkin(data_hoje, tolerancia_dias):
-            raise ValueError("Check-in não permitido: estado deve ser CONFIRMADA e data correta.")
+    def fazer_checkin(self, data_hoje: date):
+        if self.estado != "CONFIRMADA":
+            raise ValueError("Check-in permitido apenas para reservas CONFIRMADAS.")
+        if data_hoje < self.data_entrada:
+            raise ValueError("Check-in antecipado não permitido.")
+        if data_hoje > self.data_saida:
+            raise ValueError("Data da reserva já passou. Avaliar no-show.")
+
         self.estado = "CHECKIN"
+        if hasattr(self.quarto, "ocupado"):
+            self.quarto.ocupado = True
 
     def fazer_checkout(self, data_saida_real: date):
         if self.estado != "CHECKIN":
-            raise ValueError("Check-out só permitido após check-in.")
+            raise ValueError("Check-out permitido apenas após o check-in.")
 
         valor_final = self.total_devido(data_saida_real)
 
         if self.total_pago() < valor_final:
             raise ValueError(
-               f"Pagamento insuficiente. Total devido: {valor_final:.2f}, "
-               f"total pago: {self.total_pago():.2f}"
+                f"Pagamento insuficiente. Total devido: {valor_final:.2f}, "
+                f"total pago: {self.total_pago():.2f}"
             )
 
         self.estado = "CHECKOUT"
+        if hasattr(self.quarto, "ocupado"):
+            self.quarto.ocupado = False
+
         return valor_final
 
     def __validar_disponibilidade(self, quarto: Quarto):
@@ -209,7 +219,8 @@ class Reserva:
 
     def adicionar_adicional(self, adicional):
         self.__adicionais.append(adicional)
-
+    
+    # auxiliar
     def __len__(self):
         """Número de diárias."""
         return (self.data_saida - self.data_entrada).days
@@ -232,30 +243,41 @@ class Reserva:
             self.estado,
             self.origem,
             self.valor_total,
+            self.data_cancelamento.isoformat() if self.data_cancelamento else None,
+            self.data_no_show.isoformat() if self.data_no_show else None,
             self.id # Incluído para UPDATE no final
         )
 
     @staticmethod
     def from_db_row(row: sqlite3.Row):
-        """
-        Cria uma Reserva a partir de uma linha do DB. 
-        """ 
+        from datetime import date
+
         # Cria objetos Hospede e Quarto simplificados para evitar dependência cíclica
-        
         hospede_dummy = type('Hospede', (object,), {'id': row['hospede_id']})()
         quarto_dummy = type('Quarto', (object,), {'numero': row['quarto_numero']})()
 
         # O datetime.date deve ser importado e usado para converter a string de volta para date
         from datetime import date
-        
-        return Reserva(
-            id=row['id'],
-            hospede=hospede_dummy, # Objeto com ID, mas sem nome, doc, etc.
-            quarto=quarto_dummy,   # Objeto com Numero, mas sem tipo, tarifa, etc.
+      
+        obj = Reserva(
+            hospede=hospede_dummy,
+            quarto=quarto_dummy,
             data_entrada=date.fromisoformat(row['data_entrada']),
             data_saida=date.fromisoformat(row['data_saida']),
             numero_hospedes=row['num_hospedes'],
-            estado=row['estado'],
             origem=row['origem'],
-            valor_total=row['valor_total']
+            estado=row['estado'],
+            id=row['id']
         )
+    
+        obj.data_cancelamento = (
+           date.fromisoformat(row["data_cancelamento"])
+           if row["data_cancelamento"] else None
+        )
+
+        obj.data_no_show = (
+           date.fromisoformat(row["data_no_show"])
+           if row["data_no_show"] else None
+        )
+
+        return obj
