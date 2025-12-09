@@ -1,3 +1,6 @@
+from datetime import date
+import sqlite3
+ 
 class Adicional:
     """
     Representa um lançamento extra na reserva (ex.: frigobar, estacionamento).

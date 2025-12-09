@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 import sqlite3
+from .bloqueio import Bloqueio
 
 class Quarto:
     TIPOS_VALIDOS = {"SIMPLES", "DUPLO", "LUXO"}
@@ -11,11 +12,30 @@ class Quarto:
         self.capacidade = capacidade
         self.tarifa_base = tarifa_base
         self.status = status
-        self.__reservas = []   # << RELACIONAMENTO
+        self.bloqueio = []
+        self.__reservas = []   
         self.__motivo_bloqueio = None
         self.__inicio_bloqueio = None
         self.__fim_bloqueio = None
 
+    def bloquear(self, motivo: str, inicio: date, fim: date):
+        self.bloqueios.append(Bloqueio(motivo, inicio, fim))
+
+    def esta_bloqueado(self, data: date) -> bool:
+        return any(bloqueio.esta_bloqueado(data) for bloqueio in self.bloqueios)
+    
+    # Função auxiliar
+    
+    def _to_date(self, valor):
+        if isinstance(valor, date):
+            return valor
+        if isinstance(valor, str):
+            return datetime.strptime(valor, "%Y-%m-%d").date()
+        raise TypeError("Data deve ser datetime.date ou string no formato YYYY-MM-DD")
+
+    
+    # Relacionamentos
+    
     @property
     def reservas(self):
         return list(self.__reservas)
@@ -23,62 +43,32 @@ class Quarto:
     def adicionar_reserva(self, reserva):
         self.__reservas.append(reserva)
 
-    @property
-    def numero(self):
-        return self.__numero
-
-    @numero.setter
-    def numero(self, valor):
-        if not isinstance(valor, int) or valor <= 0:
-            raise ValueError("Número deve ser inteiro positivo.")
-        self.__numero = valor
-
-    @property
-    def tipo(self):
-        return self.__tipo
-
-    @tipo.setter
-    def tipo(self, valor):
-        if valor.upper() not in Quarto.TIPOS_VALIDOS:
-            raise ValueError("Tipo inválido.")
-        self.__tipo = valor.upper()
-
-    @property
-    def capacidade(self):
-        return self.__capacidade
-
-    @capacidade.setter
-    def capacidade(self, valor):
-        if valor < 1:
-            raise ValueError("Capacidade deve ser ≥ 1.")
-        self.__capacidade = valor
-
-    @property
-    def tarifa_base(self):
-        return self.__tarifa_base
-
-    @tarifa_base.setter
-    def tarifa_base(self, valor):
-        if valor <= 0:
-            raise ValueError("Tarifa base deve ser > 0.")
-        self.__tarifa_base = valor
-
-    @property
-    def status(self):
-        return self.__status
-
-    @status.setter
-    def status(self, valor):
-        if valor.upper() not in Quarto.STATUS_VALIDOS:
-            raise ValueError("Status inválido.")
-        self.__status = valor.upper()
+    
+    # Propriedades diversas
     
     @property
     def periodo_bloqueio(self):
         return (self.__inicio_bloqueio, self.__fim_bloqueio)
+    
+    @property
+    def bloqueios(self):
+      """Retorna informações do bloqueio atual."""
+      if not self.__inicio_bloqueio or not self.__fim_bloqueio:
+          return None
 
-    def bloquear(self, motivo: str, inicio: date, fim: date):
-        """Bloqueia o quarto para manutenção ou outro motivo."""
+      return {
+        "motivo": self.__motivo_bloqueio,
+        "inicio": self.__inicio_bloqueio,
+        "fim": self.__fim_bloqueio
+    }
+
+    # BLOQUEIO CORRIGIDO
+    
+    def bloquear(self, inicio, fim, motivo: str):
+        """Bloqueia o quarto para manutenção."""
+        inicio = self._to_date(inicio)
+        fim = self._to_date(fim)
+
         if inicio > fim:
             raise ValueError("Data inicial não pode ser maior que a data final.")
 
@@ -88,35 +78,33 @@ class Quarto:
         self.__fim_bloqueio = fim
 
     def desbloquear(self):
-        """Remove bloqueio e devolve o quarto como DISPONIVEL."""
         self.status = "DISPONIVEL"
         self.__motivo_bloqueio = None
         self.__inicio_bloqueio = None
         self.__fim_bloqueio = None
 
-    def esta_bloqueado(self, data: date) -> bool:
-        """Verifica se o quarto está bloqueado em uma data."""
+    def esta_bloqueado(self, data):
+        data = self._to_date(data)
+
         if self.status != "MANUTENCAO":
             return False
         if not self.__inicio_bloqueio or not self.__fim_bloqueio:
             return False
+
         return self.__inicio_bloqueio <= data <= self.__fim_bloqueio
 
-    # --- Métodos Especiais ---
+    # Representações
+    
     def __str__(self):
         return f"Quarto {self.numero} ({self.tipo}) - Capacidade: {self.capacidade}"
 
     def __lt__(self, other):
-        if not isinstance(other, Quarto):
-            return NotImplemented
-        
-        return (self.tipo, self.numero) < (other.tipo, other.numero)
-    def __lt__(self, other):
         return self.numero < other.numero
+
+
+    # Persistência
     
     def to_tuple(self):
-        """Converte o objeto Quarto em uma tupla para comandos SQL."""
-        # A ordem deve corresponder aos campos na tabela (exceto a chave PK se for UPDATE)
         return (
             self.numero,
             self.tipo,
@@ -124,15 +112,12 @@ class Quarto:
             self.tarifa_base,
             self.status,
             self.__motivo_bloqueio,
-            inicio_str,
-            fim_str
+            self.__inicio_bloqueio.isoformat() if self.__inicio_bloqueio else None,
+            self.__fim_bloqueio.isoformat() if self.__fim_bloqueio else None
         )
 
     @staticmethod
     def from_db_row(row: sqlite3.Row):
-        """Cria um objeto Quarto a partir de uma linha retornada pelo DB."""
-        
-        # Cria a instância usando os dados básicos do DB
         quarto = Quarto(
             numero=row['numero'],
             tipo=row['tipo'],
@@ -140,8 +125,17 @@ class Quarto:
             tarifa_base=row['tarifa_base'],
             status=row['status']
         )
+
+        # Converter datas do banco
+        inicio = row['inicio_bloqueio']
+        fim = row['fim_bloqueio']
+
         quarto._Quarto__motivo_bloqueio = row['motivo_bloqueio']
-        quarto._Quarto__inicio_bloqueio = inicio_date
-        quarto._Quarto__fim_bloqueio = fim_date
-        
+        quarto._Quarto__inicio_bloqueio = (
+            date.fromisoformat(inicio) if inicio else None
+        )
+        quarto._Quarto__fim_bloqueio = (
+            date.fromisoformat(fim) if fim else None
+        )
+
         return quarto

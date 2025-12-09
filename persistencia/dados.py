@@ -35,6 +35,7 @@ def _criar_tabelas(conn):
         );
     """)
 
+    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS reservas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,6 +47,12 @@ def _criar_tabelas(conn):
             estado TEXT NOT NULL,
             origem TEXT NOT NULL,
             valor_total REAL,
+        
+            -- COLUNAS DE RASTREAMENTO REAL ADICIONADAS PARA OS FLUXOS:
+            data_cancelamento TEXT,
+            data_no_show TEXT,
+            check_in_real TEXT,
+            check_out_real TEXT,
 
             FOREIGN KEY (hospede_id) REFERENCES hospedes(id),
             FOREIGN KEY (quarto_numero) REFERENCES quartos(numero)
@@ -77,7 +84,7 @@ def _criar_tabelas(conn):
     conn.commit()
 
 def seed_dados():
-    print("🔧 Rodando SEED da base de dados...")
+    print("Rodando SEED da base de dados...")
 
     conn = get_db_connection()
     _criar_tabelas(conn)
