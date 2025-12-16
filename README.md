@@ -163,9 +163,12 @@ Git instalado.
 2. Clone o Repositório - Abra seu terminal ou Git Bash e utilize o comando abaixo para criar uma cópia local do projeto.
 
 git clone https://github.com/nascimentooliveira-lab/HotelWise.git
+
+
 3. Navegue até a pasta - Entre na pasta do projeto que foi recém-criada.
 
 RESERVA_HOTEIS_HOTELWISE
+
 4. Execute - O programa principal que inicia a interface CLI. Para executá-lo, utilize o seguinte comando a partir da pasta raiz do projeto:
 
 python menu.py
