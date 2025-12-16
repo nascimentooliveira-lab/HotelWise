@@ -288,11 +288,16 @@ def cancelar_menu():
 
 
 def noshow_menu():
-    id = int(input("ID reserva: "))
-    r = buscar_reserva(id)
+    id_reserva = int(input("ID reserva: "))
+    r = buscar_reserva(id_reserva)
+
+    if r is None:
+        print("❌ Reserva não encontrada.")
+        return
+
     r.marcar_no_show(date.today())
-    atualizar_reserva(r)
-    print("No-show registrado")
+    print("✔ Reserva marcada como NO-SHOW.")
+
 
 
 def excluir_reserva_menu():
@@ -444,8 +449,7 @@ def menu():
 
 ┌─────────────── RELATÓRIOS ──────────────┐
 │ 23 Taxa de Ocupação                     │
-│ 24 Receita por Tipo de Quarto           │
-│ 25 Cancelamentos / No-show              │
+│                                         │
 └─────────────────────────────────────────┘
               
 ┌─────────────── SISTEMA ─────────────────┐

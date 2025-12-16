@@ -3,10 +3,34 @@ from persistencia.reserva_dao import listar_reservas_completas
 from persistencia.quarto_dao import listar_quartos
 
 
-def sobrepoe_periodo(reserva, inicio, fim):
-    return not (reserva.data_saida <= inicio or reserva.data_entrada >= fim)
+# ======================================================
+# Utilitário: converte string ISO ou date em date
+# ======================================================
+def to_date(valor):
+    if valor is None:
+        return None
+    if isinstance(valor, date):
+        return valor
+    # SQLite salva datas como string YYYY-MM-DD
+    return date.fromisoformat(valor)
 
 
+# ======================================================
+# Verifica se reserva sobrepõe o período informado
+# ======================================================
+def sobrepoe_periodo(reserva, inicio: date, fim: date) -> bool:
+    data_entrada = to_date(reserva["data_entrada"])
+    data_saida = to_date(reserva["data_saida"])
+
+    return not (
+        data_saida <= inicio or
+        data_entrada >= fim
+    )
+
+
+# ======================================================
+# Relatório: Taxa de Ocupação (%)
+# ======================================================
 def calcular_taxa_ocupacao(inicio: date, fim: date) -> float:
     reservas = listar_reservas_completas()
     quartos = listar_quartos()
@@ -20,40 +44,52 @@ def calcular_taxa_ocupacao(inicio: date, fim: date) -> float:
     diarias_ocupadas = 0
 
     for r in reservas:
-        if r.estado in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
-            entrada = max(r.data_entrada, inicio)
-            saida = min(r.data_saida, fim)
+        if r["estado"] in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
+            entrada = max(to_date(r["data_entrada"]), inicio)
+            saida = min(to_date(r["data_saida"]), fim)
             diarias_ocupadas += (saida - entrada).days
 
     return round((diarias_ocupadas / (total_quartos * dias)) * 100, 2)
 
 
+# ======================================================
+# Relatório: Receita por Tipo de Quarto
+# ======================================================
 def calcular_receita_por_tipo(inicio: date, fim: date) -> dict:
     reservas = listar_reservas_completas()
     resultado = {}
 
     for r in reservas:
-        if r.estado in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
-            tipo = r.quarto.tipo
-            dias = (min(r.data_saida, fim) - max(r.data_entrada, inicio)).days
-            receita = dias * r.quarto.tarifa_base
+        if r["estado"] in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
+            tipo = r["tipo_quarto"]
+            entrada = max(to_date(r["data_entrada"]), inicio)
+            saida = min(to_date(r["data_saida"]), fim)
+            dias = (saida - entrada).days
+
+            receita = dias * r["tarifa_base"]
             resultado[tipo] = resultado.get(tipo, 0) + receita
 
     return resultado
 
 
+# ======================================================
+# Relatório: Cancelamentos e No-show
+# ======================================================
 def calcular_cancelamentos_noshow(inicio: date, fim: date) -> tuple[int, int]:
     reservas = listar_reservas_completas()
     canceladas = 0
     noshow = 0
 
     for r in reservas:
-        if r.estado == "CANCELADA" and r.data_cancelamento:
-            if inicio <= r.data_cancelamento <= fim:
+        if r["estado"] == "CANCELADA" and r["data_cancelamento"]:
+            data_cancel = to_date(r["data_cancelamento"])
+            if inicio <= data_cancel <= fim:
                 canceladas += 1
 
-        if r.estado == "NO_SHOW" and r.data_no_show:
-            if inicio <= r.data_no_show <= fim:
+        if r["estado"] == "NO_SHOW" and r["data_no_show"]:
+            data_ns = to_date(r["data_no_show"])
+            if inicio <= data_ns <= fim:
                 noshow += 1
 
     return canceladas, noshow
+
