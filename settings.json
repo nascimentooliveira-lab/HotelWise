@@ -1,0 +1,23 @@
+{
+  "checkin_hora": "14:00",
+  "checkout_hora": "12:00",
+  "tolerancia_checkin_minutos": 120,
+  "tolerancia_checkout_minutos": 60,
+  "noshow_tolerancia_minutos": 180,
+  "multa_cancelamento_percentual": 0.5,
+  "multiplicador_fim_de_semana": 1.2,
+  "temporadas": [
+    {
+      "nome": "Alta Dezembro",
+      "inicio": "2025-12-01",
+      "fim": "2025-12-31",
+      "multiplicador": 1.30
+    },
+    {
+      "nome": "Inverno Julho",
+      "inicio": "2025-07-01",
+      "fim": "2025-07-31",
+      "multiplicador": 1.20
+    }
+  ]
+}

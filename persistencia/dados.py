@@ -1,208 +1,42 @@
-from datetime import date, timedelta
 import sqlite3
 
-DATABASE_NAME = "hotelwise.db"
+DB_PATH = "hotel.db"
 
-
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE_NAME)
+def get_db():
+    conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
-def _criar_tabelas(conn):
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS quartos (
-            numero INTEGER PRIMARY KEY,
-            tipo TEXT NOT NULL,
-            capacidade INTEGER NOT NULL,
-            tarifa_base REAL NOT NULL,
-            status TEXT NOT NULL,
-            motivo_bloqueio TEXT,
-            bloqueio_inicio TEXT,
-            bloqueio_fim TEXT
-        );
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS hospedes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            documento TEXT UNIQUE NOT NULL,
-            email TEXT,
-            telefone TEXT
-        );
-    """)
-
-    
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS reservas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            hospede_id INTEGER NOT NULL,
-            quarto_numero INTEGER NOT NULL,
-            data_entrada TEXT NOT NULL,
-            data_saida TEXT NOT NULL,
-            num_hospedes INTEGER NOT NULL,
-            estado TEXT NOT NULL,
-            origem TEXT NOT NULL,
-            valor_total REAL,
-        
-            -- COLUNAS DE RASTREAMENTO REAL ADICIONADAS PARA OS FLUXOS:
-            data_cancelamento TEXT,
-            data_no_show TEXT,
-            check_in_real TEXT,
-            check_out_real TEXT,
-
-            FOREIGN KEY (hospede_id) REFERENCES hospedes(id),
-            FOREIGN KEY (quarto_numero) REFERENCES quartos(numero)
-        );
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS pagamentos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            reserva_id INTEGER NOT NULL,
-            valor REAL NOT NULL,
-            forma TEXT NOT NULL,
-            data TEXT NOT NULL,
-
-            FOREIGN KEY (reserva_id) REFERENCES reservas(id)
-        );
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS temporadas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            data_inicio TEXT NOT NULL,
-            data_fim TEXT NOT NULL,
-            fator_multiplicador REAL NOT NULL
-        );
-    """)
-
-    conn.commit()
-
-def seed_dados():
-    print("Rodando SEED da base de dados...")
-
-    conn = get_db_connection()
-    _criar_tabelas(conn)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT COUNT(*) FROM quartos")
-    if cursor.fetchone()[0] == 0:
-        quartos_seed = [
-            (101, "SIMPLES", 1, 120.00, "DISPONIVEL", None, None, None),
-            (102, "SIMPLES", 1, 120.00, "DISPONIVEL", None, None, None),
-            (201, "DUPLO", 2, 180.00, "DISPONIVEL", None, None, None),
-            (202, "DUPLO", 2, 180.00, "DISPONIVEL", None, None, None),
-            (301, "LUXO", 4, 350.00, "DISPONIVEL", None, None, None),
-            (302, "LUXO", 4, 350.00, "MANUTENCAO", "Pintura", '2026-01-01', '2026-01-10'),
-            (401, "LUXO", 5, 450.00, "DISPONIVEL", None, None, None),
-        ]
-        cursor.executemany("""
-            INSERT INTO quartos (numero, tipo, capacidade, tarifa_base, status, motivo_bloqueio, bloqueio_inicio, bloqueio_fim)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, quartos_seed)
-
-        print(" Quartos inseridos.")
-    else:
-        print(" Quartos já existiam.")
-
-    #TEMPORADAS
-    cursor.execute("SELECT COUNT(*) FROM temporadas")
-    if cursor.fetchone()[0] == 0:
-        temporadas_seed = [
-            ("Baixa", "2026-03-01", "2026-05-31", 1.00),
-            ("Média", "2026-06-01", "2026-08-31", 1.25),
-            ("Alta", "2025-12-15", "2026-02-28", 1.50),
-        ]
-        cursor.executemany("""
-            INSERT INTO temporadas (nome, data_inicio, data_fim, fator_multiplicador)
-            VALUES (?, ?, ?, ?)
-        """, temporadas_seed)
-        
-        print(" Temporadas inseridas.")
-    else:
-        print(" Temporadas já existiam.")
-
-    #HÓSPEDES
-    cursor.execute("SELECT COUNT(*) FROM hospedes")
-    if cursor.fetchone()[0] == 0:
-        hospedes_seed = [
-            ("João Silva", "123.456.789-00", "joao@email.com", "5511987654321"),
-            ("Maria Souza", "987.654.321-00", "maria@email.com", "5511999998888"),
-        ]
-        cursor.executemany("""
-            INSERT INTO hospedes (nome, documento, email, telefone)
-            VALUES (?, ?, ?, ?)
-        """, hospedes_seed)
-        print(" Hóspedes inseridos.")
-    else:
-        print(" Hóspedes já existiam.")
-    
-    #RESERVAS
-    cursor.execute("SELECT COUNT(*) FROM reservas")
-    if cursor.fetchone()[0] == 0:
-        # Usaremos hospede_id 1 e 2.
-        reservas_seed = [
-            # Reserva 1: Quarto 201 (Ocupa 2025-12-03, 04, 05, 06)
-            (1, 201, '2025-12-03', '2025-12-07', 2, "CONFIRMADA", "WEB", 720.00), 
-            # Reserva 2: Quarto 401 (Ocupa 2025-12-01, 02, 03)
-            (2, 401, '2025-12-01', '2025-12-04', 3, "CHECK_IN", "TELEFONE", 1350.00),
-        ]
-        cursor.executemany("""
-            INSERT INTO reservas (hospede_id, quarto_numero, data_entrada, data_saida, num_hospedes, estado, origem, valor_total)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, reservas_seed)
-        print(" Reservas de teste inseridas.")
-    else:
-        print(" Reservas já existiam.")
-
-
+def init_db():
+    conn = get_db()
+    with open("schema.sql", "r", encoding="utf-8") as f:
+        conn.executescript(f.read())
     conn.commit()
     conn.close()
-    print(" SEED finalizado.")
 
-def relatorio_ocupacao(inicio: date, fim: date):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+def listar_reservas_completas():
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
 
-    cursor.execute("SELECT COUNT(*) as total FROM quartos")
-    total_quartos = cursor.fetchone()["total"]
+    rows = conn.execute(
+        "SELECT * FROM vw_reservas_completas"
+    ).fetchall()
 
-    cursor.execute("""
-        SELECT quarto_numero, data_entrada, data_saida
-        FROM reservas
-        WHERE NOT (data_saida <= ? OR data_entrada >= ?)
-    """, (inicio.isoformat(), fim.isoformat()))
-
-    reservas = cursor.fetchall()
     conn.close()
+    return rows
 
-    relatorio = {}
-    dia = inicio
+def reset_db():
+    """
+    Remove todos os dados do banco (desenvolvimento).
+    Mantém as tabelas.
+    """
+    conn = get_db()
+    cur = conn.cursor()
 
-    while dia < fim:
-        ocupados = 0
+    # Desativa FK temporariamente para limpeza segura
+    cur.execute("PRAGMA foreign_keys = OFF;")
 
-        for r in reservas:
-            entrada = date.fromisoformat(r["data_entrada"])
-            saida = date.fromisoformat(r["data_saida"])
-
-            if entrada <= dia < saida:
-                ocupados += 1
-
-        livres = total_quartos - ocupados
-        taxa = round((ocupados / total_quartos * 100), 2) if total_quartos > 0 else 0
-
-        relatorio[dia] = {
-            "ocupados": ocupados,
-            "livres": livres,
-            "taxa_ocupacao": taxa
-        }
-
-        dia += timedelta(days=1)
-
-    return relatorio
+    cur.execute("DELETE FROM reservas;")
+    cur.execute("DELETE FROM hospedes;")
+    cur.execute("DELETE FROM quartos;")

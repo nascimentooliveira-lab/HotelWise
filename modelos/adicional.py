@@ -1,25 +1,23 @@
-from datetime import date
-import sqlite3
- 
 class Adicional:
-    """
-    Representa um lançamento extra na reserva (ex.: frigobar, estacionamento).
-    """
+    def __init__(self, id=None, reserva_id=None, descricao="", valor=0.0):
+        self.id = id
+        self.reserva_id = reserva_id
+        self.descricao = descricao
+        self.valor = valor
 
-    def __init__(self, nome: str, valor: float):
-        if not nome.strip():
-            raise ValueError("Nome do adicional não pode ser vazio.")
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "reserva_id": self.reserva_id,
+            "descricao": self.descricao,
+            "valor": self.valor
+        }
 
-        if valor <= 0:
-            raise ValueError("Valor do adicional deve ser maior que zero.")
-
-        self.__nome = nome
-        self.__valor = valor
-
-    @property
-    def nome(self):
-        return self.__nome
-
-    @property
-    def valor(self):
-        return self.__valor
+    @staticmethod
+    def from_db_row(row):
+        return Adicional(
+            id=row["id"],
+            reserva_id=row["reserva_id"],
+            descricao=row["descricao"],
+            valor=row["valor"]
+        )

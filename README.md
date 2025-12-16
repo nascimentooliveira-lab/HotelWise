@@ -171,7 +171,7 @@ RESERVA_HOTEIS_HOTELWISE
 
 4. Execute - O programa principal que inicia a interface CLI. Para executá-lo, utilize o seguinte comando a partir da pasta raiz do projeto:
 
-python menu.py
+python main.py
 
 
 ## Autor

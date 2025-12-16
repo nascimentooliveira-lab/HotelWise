@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sqlite3
-from persistencia.dados import get_db_connection
+from persistencia.dados import get_db
+
 
 class Hospede:
     def __init__(self, nome="", documento="", email="", telefone="", id=None):
@@ -13,6 +14,15 @@ class Hospede:
         # Não carregar reservas aqui o que evita import circular
         self.__reservas = None
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "documento": self.documento,
+            "email": self.email,
+            "telefone": self.telefone
+        }
+
     @property
     def reservas(self):
         """
@@ -23,7 +33,7 @@ class Hospede:
                 self.__reservas = []
             else:
                 # import local evita import circular
-                from modelos.reserva_dao import buscar_reservas_por_hospede
+                from persistencia.reserva_dao import buscar_reservas_por_hospede
                 self.__reservas = buscar_reservas_por_hospede(self.id)
 
         return self.__reservas
