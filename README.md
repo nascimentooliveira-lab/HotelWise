@@ -4,21 +4,13 @@
 
 O HotelWise é um sistema de gerenciamento de reservas e inventário de hotéis, focado em fornecer uma solução robusta para o controle de acomodações e hóspedes.
 
-O projeto pode ser acessado via Interface de Linha de Comando (CLI) para gestão interna, ou opcionalmente exposto como uma API mínima usando **FastAPI** para consumo por outras aplicações. A implementação enfatiza  boas práticas de Orientação a Objetos, garantindo alta modularidade e facilidade de manutenção.
+O projeto pode ser acessado via Interface de Linha de Comando (CLI) para gestão interna, ou opcionalmente exposto como uma CLI para consumo por outras aplicações. A implementação enfatiza boas práticas de Orientação a Objetos, garantindo alta modularidade e facilidade de manutenção.
 
 
 # Objetivos do Projeto e Foco Técnico
 
 Este projeto possui um duplo foco: entregar um produto funcional e otimizar e automatizar o ciclo de vida de uma reserva, desde a busca inicial pelo hóspede até o controle de inventário e gestão financeira pelo hotel.
 
-| Categoria | Detalhamento |
-| :--- | :--- |
-| **Arquitetura** | Desenvolver um sistema modular com forte aplicação de princípios de **Orientação a Objetos** (Herança, Encapsulamento, Composição e Polimorfismo). |
-| **Funcionalidades** | Implementar o ciclo completo de reserva, incluindo **check-in/check-out**, **política de cancelamento** e **bloqueios** de quartos por manutenção. |
-| **Modelagem** | Gerenciar a complexidade de **tarifas por temporada** e fornecer **relatórios de desempenho** (Taxa de Ocupação, ADR, RevPAR). |
-| **Persistência** | Utilizar soluções simples e leves de persistência de dados:**SQLite** |
-**Interface** | `argparse` (Python) | Para construção da Interface de Linha de Comando (CLI). |
----
 
 ## ⚙️ Tecnologias e Dependência
 
@@ -37,120 +29,147 @@ A modelagem de classes é o ponto central deste projeto, desenhada para demonstr
 | Camada | Responsabilidade Chave |
 | :--- | :--- |
 | **Domínio (Entidades)** | Lógica de Negócios, Validações e Modelos de Dados Centrais. |
-| **Persistência** | Conexão e operações de salvamento/carga de dados (JSON/SQLite). |
+| **Persistência** | Conexão e operações de salvamento/carga de dados SQLite. |
 | **Serviço (Lógica)** | Orquestração de regras complexas (ex: cálculo de tarifa, verificação de disponibilidade). |
-| **Interface (CLI/API)** | Interação com o usuário ou recebimento de requisições HTTP. |
+| **Interface CLI** | Interação com o usuário. |
 
-### 📝 Detalhamento das Classes e Aplicação de POO
-
-| Classe | Conceito POO Aplicado | Descrição e Funcionalidades Chave |
-| :--- | :--- | :--- |
-| **Pessoa** | Herança (Classe Base) | Classe base para `Hospede` e `Funcionario`, contendo atributos comuns (nome, contato). |
-| **Hospede** | Herança | Estende `Pessoa`. Contém dados específicos do hóspede e histórico de reservas. |
-| **Acomodacao** | Encapsulamento (Classe Base) | Classe base para tipos de quartos. Garante que o status (`disponível`, `ocupado`, `bloqueado`) seja modificado apenas por métodos controlados. |
-| **QuartoSimples** | Herança | Estende `Acomodacao`, com tarifa padrão. |
-| **QuartoDeluxe** | Herança | Estende `Acomodacao`, com atributos adicionais (vista, frigobar). |
-| **Tarifa** | Composição | Armazena a estrutura de preços. Uma `Reserva` **compõe** uma `Tarifa` para calcular o valor final. |
-| **Reserva** | Validações/Lógica de Negócio | Contém a lógica de *check-in/check-out* e **validações** de regras (ex: data de check-out deve ser posterior à de check-in). |
-| **InventarioManager** | Serviço / Composição | Gerencia a lista de todas as `Acomodacoes`, aplicando bloqueios de manutenção e consultando disponibilidade. |
----
 
 ## 🏨 UML Textual
 
-## Classe: Pessoa (Classe Base)
+## Classe Hospede 
+---------------------------------
+- id: int
+- nome: str
+- documento: str
+- email: str
+- telefone: str
+---------------------------------
++ to_dict(): dict
++ __str__(): str
+  
+Relacionamentos
 
-Atributos:
-nome, contato, email
+1 Hospede —— Reserva
 
-Métodos:
-atualizarContato(contato), obterDados()
+Um hóspede pode ter várias reservas
 
-Relacionamentos:
-Superclasse de Hospede e Funcionario (Herança)
+## Classe Quarto
+---------------------------------
+- numero: int
+- tipo: str
+- capacidade: int
+- tarifa_base: float
+- _status: str
+- _bloqueios: list
+- _reservas: list
+---------------------------------
++ status(): str
++ status(valor): void
++ ocupar(): void
++ desbloquear(): void
++ bloquear(inicio, fim, motivo): void
++ esta_bloqueado(data): bool
++ adicionar_reserva(reserva): void
++ to_dict(): dict
++ __str__(): str
 
-## Classe: Hospede (extends Pessoa)
+Relacionamentos
 
-Atributos:
-idHospede, documento, historicoReservas
+1 Quarto —— * Reserva
 
-Métodos:
-adicionarReserva, listarHistorico()
+Um quarto pode ter várias reservas
 
-Relacionamentos:
-Herdada de Pessoa
-Hospede possui várias Reservas ()
+Agregação:
 
-## Classe: Funcionario (extends Pessoa) 
+Quarto mantém lista de reservas associadas
 
-Atributos:
-idFuncionario, cargo
 
-Métodos:
-registrarCheckIn, registrarCheckOut
+## Classe Reserva
+------------------------------------------------
+- id: int
+- hospede: Hospede
+- quarto: Quarto
+- data_entrada: date
+- data_saida: date
+- num_hospedes: int
+- origem: str
+- estado: str
+- check_in_real: datetime
+- check_out_real: datetime
+- data_cancelamento: date
+- data_no_show: date
+------------------------------------------------
++ confirmar(): void
++ fazer_checkin(agora): void
++ fazer_checkout(agora): void
++ cancelar(): void
++ marcar_no_show(): void
++ calcular_valor_total(): float
++ total_adicionais(): float
++ total_pago(): float
++ total_devido(): float
++ to_dict(): dict
++ __str__(): str
 
-Relacionamentos:
-Herdada de Pessoa
+Relacionamentos
 
-## Classe: Acomodacao (Classe Base Encapsulada)
+1 Reserva —— 1 Hospede
 
-Atributos:
-idAcomodacao, numero, status : (disponível, ocupado, bloqueado), capacidade
+1 Reserva —— 1 Quarto
 
-Métodos:
-setStatus: (protegido), getStatus(), calcularTarifaBase()
+Composição:
 
-Relacionamentos:
-Superclasse de QuartoSimples e QuartoDeluxe, Gerenciada por InventarioManager
+Reserva não existe sem hóspede e quarto 
 
-## Classe: QuartoSimples (extends Acomodacao)
-Atributos:
-tarifaBase
+## Class Pagamento
+-------------------------------
+- id: int
+- reserva_id: int
+- valor: float
+- forma: str
+- data_pagamento: date
+-------------------------------
++ to_dict(): dict
 
-Métodos:
-calcularTarifaBase()
+Relacionamentos
 
-## Classe: QuartoDeluxe (extends Acomodacao)
+1 Reserva —— * Pagamento
 
-Atributos:
-tarifaBase, vista
+Uma reserva pode ter vários pagamentos
 
-Métodos:
-calcularTarifaBase() 
+## Classe Adicional
+-------------------------------
+- id: int
+- reserva_id: int
+- descricao: str
+- valor: float
+-------------------------------
++ to_dict(): dict
 
-## Classe: Tarifa (Composição)
+Relacionamentos
 
-Atributos:
-valorBase, taxas, descontos 
+1 Reserva —— * Adicional
 
-Métodos:
-calcularTotal()
+Uma reserva pode ter vários adicionais
 
-Relacionamentos:
-Composta dentro de Reserva ()
 
-## Classe: Reserva
+🚀 Como Executar
+Siga os passos abaixo para executar o ChatBot Cariri Turismo em sua máquina local.
 
-Atributos:
-idReserva, dataCheckIn, dataCheckOut, status, acomodacao, tarifa
+1. Pré-requisitos
 
-Métodos:
-validarDatas(), calcularValorFinal(), realizarCheckIn(), realizarCheckOut()
+Python 3.10 ou superior.
+Git instalado.
+2. Clone o Repositório - Abra seu terminal ou Git Bash e utilize o comando abaixo para criar uma cópia local do projeto.
 
-Relacionamentos:
-1 Reserva possui 1 Acomodacao
-1 Reserva compõe 1 Tarifa
-1 Reserva pertence a 1 Hospede
+git clone https://github.com/nascimentooliveira-lab/HotelWise.git
+3. Navegue até a pasta - Entre na pasta do projeto que foi recém-criada.
 
-## Classe: InventarioManager (Serviço)
+RESERVA_HOTEIS_HOTELWISE
+4. Execute - O programa principal que inicia a interface CLI. Para executá-lo, utilize o seguinte comando a partir da pasta raiz do projeto:
 
-Atributos:
-listaAcomodacoes : List<Acomodacao>
+python menu.py
 
-Métodos:
-consultarDisponibilidade(dataInicio, dataFim), bloquearAcomodacao, liberarAcomodacao, registrarOcupacao
-
-Relacionamentos:
-1 InventarioManager gerencia muitas Acomodacoes, Interage com Reserva durante validações
 
 ## Autor
 
