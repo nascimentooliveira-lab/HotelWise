@@ -1,7 +1,6 @@
 from datetime import date
 from persistencia.reserva_dao import listar_reservas_completas
-from persistencia.quarto_dao import listar_quartos
-
+from persistencia.quarto_dao import listar_quartos, buscar_quarto_por_numero
 
 # ======================================================
 # Utilitário: converte string ISO ou date em date
@@ -28,9 +27,6 @@ def sobrepoe_periodo(reserva, inicio: date, fim: date) -> bool:
     )
 
 
-# ======================================================
-# Relatório: Taxa de Ocupação (%)
-# ======================================================
 def calcular_taxa_ocupacao(inicio: date, fim: date) -> float:
     reservas = listar_reservas_completas()
     quartos = listar_quartos()
@@ -42,12 +38,21 @@ def calcular_taxa_ocupacao(inicio: date, fim: date) -> float:
         return 0.0
 
     diarias_ocupadas = 0
+    ESTADOS_OCUPAM = {"CHECKIN", "CHECKOUT", "CONFIRMADA"}
 
     for r in reservas:
-        if r["estado"] in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
-            entrada = max(to_date(r["data_entrada"]), inicio)
-            saida = min(to_date(r["data_saida"]), fim)
-            diarias_ocupadas += (saida - entrada).days
+        if r["estado"] not in ESTADOS_OCUPAM:
+            continue
+
+        if not sobrepoe_periodo(r, inicio, fim):
+            continue
+
+        entrada = max(to_date(r["data_entrada"]), inicio)
+        saida = min(to_date(r["data_saida"]), fim)
+
+        noites = (saida - entrada).days
+        if noites > 0:
+            diarias_ocupadas += noites
 
     return round((diarias_ocupadas / (total_quartos * dias)) * 100, 2)
 
@@ -60,17 +65,30 @@ def calcular_receita_por_tipo(inicio: date, fim: date) -> dict:
     resultado = {}
 
     for r in reservas:
-        if r["estado"] in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
-            tipo = r["tipo_quarto"]
-            entrada = max(to_date(r["data_entrada"]), inicio)
-            saida = min(to_date(r["data_saida"]), fim)
-            dias = (saida - entrada).days
+        if r["estado"] not in {"CHECKIN", "CHECKOUT"}:
+            continue
 
-            receita = dias * r["tarifa_base"]
-            resultado[tipo] = resultado.get(tipo, 0) + receita
+        if not sobrepoe_periodo(r, inicio, fim):
+            continue
+
+        # ✅ AQUI ESTÁ A CORREÇÃO
+        quarto = buscar_quarto_por_numero(r["numero_quarto"])
+        if not quarto:
+            continue
+
+        tipo = quarto["tipo"]
+
+        entrada = max(to_date(r["data_entrada"]), inicio)
+        saida = min(to_date(r["data_saida"]), fim)
+        dias = (saida - entrada).days
+
+        if dias <= 0:
+            continue
+
+        receita = dias * quarto["tarifa_base"]
+        resultado[tipo] = resultado.get(tipo, 0) + receita
 
     return resultado
-
 
 # ======================================================
 # Relatório: Cancelamentos e No-show

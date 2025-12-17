@@ -2,7 +2,7 @@ from datetime import date, datetime, time
 
 from persistencia.hospede_dao import (
     criar_hospede, listar_hospedes, buscar_hospede,
-    atualizar_hospede, excluir_hospede, buscar_hospede_por_documento, buscar_hospede_por_id
+    excluir_hospede, buscar_hospede_por_documento, buscar_hospede_por_id
 )
 from persistencia.quarto_dao import (
     criar_quarto, listar_quartos, buscar_quarto_por_numero,
@@ -82,14 +82,6 @@ def atualizar_hospede_menu():
     nome = input(f"Nome [{h.nome}]: ") or h.nome
     email = input(f"Email [{h.email}]: ") or h.email
     telefone = input(f"Telefone [{h.telefone}]: ") or h.telefone
-
-    atualizar_hospede({
-        "id": id,
-        "nome": nome,
-        "email": email,
-        "telefone": telefone
-    })
-    print("✔ Hóspede atualizado")
 
 def excluir_hospede_menu():
     id = int(input("ID do hóspede: "))
@@ -391,36 +383,81 @@ def adicional_menu():
     except Exception as e:
         print(f"Erro ao adicionar adicional: {e}")
 
-
 def relatorio_taxa_ocupacao_menu():
-    inicio = date.fromisoformat(input("Data início (YYYY-MM-DD): "))
-    fim = date.fromisoformat(input("Data fim (YYYY-MM-DD): "))
+    try:
+        inicio = date.fromisoformat(
+            input("Data início (YYYY-MM-DD): ").strip()
+        )
+        fim = date.fromisoformat(
+            input("Data fim (YYYY-MM-DD): ").strip()
+        )
 
-    taxa = calcular_taxa_ocupacao(inicio, fim)
-    print(f"\nTaxa de ocupação: {taxa}%")
+        if fim <= inicio:
+            print("\n A data final deve ser maior que a data inicial.")
+            return
+
+        taxa = calcular_taxa_ocupacao(inicio, fim)
+        print(f"\n Taxa de ocupação no período: {taxa}%")
+
+    except ValueError:
+        print("\n Data inválida. Use o formato YYYY-MM-DD.")
 
 
 def relatorio_receita_menu():
-    inicio = date.fromisoformat(input("Data início (YYYY-MM-DD): "))
-    fim = date.fromisoformat(input("Data fim (YYYY-MM-DD): "))
+    try:
+        inicio = date.fromisoformat(
+            input("Data início (YYYY-MM-DD): ").strip()
+        )
+        fim = date.fromisoformat(
+            input("Data fim (YYYY-MM-DD): ").strip()
+        )
 
-    receitas = calcular_receita_por_tipo(inicio, fim)
+        if fim <= inicio:
+            print("\nA data final deve ser maior que a data inicial.")
+            input("\nPressione Enter para continuar...")
+            return
 
-    print("\nReceita por tipo de quarto")
-    for tipo, valor in receitas.items():
-        print(f"- {tipo}: R$ {valor:.2f}")
+        receitas = calcular_receita_por_tipo(inicio, fim)
 
+        print("\nReceita por tipo de quarto")
+
+        if not receitas:
+            print("Nenhuma receita encontrada no período informado.")
+        else:
+            for tipo, valor in receitas.items():
+                print(f"- {tipo}: R$ {valor:.2f}")
+
+        input("\nPressione Enter para continuar...")
+
+    except ValueError:
+        print("\nData inválida. Use o formato YYYY-MM-DD.")
+        input("\nPressione Enter para continuar...")
 
 def relatorio_cancelamentos_menu():
-    inicio = date.fromisoformat(input("Data início (YYYY-MM-DD): "))
-    fim = date.fromisoformat(input("Data fim (YYYY-MM-DD): "))
+    try:
+        inicio = date.fromisoformat(
+            input("Data início (YYYY-MM-DD): ").strip()
+        )
+        fim = date.fromisoformat(
+            input("Data fim (YYYY-MM-DD): ").strip()
+        )
 
-    canceladas, noshow = calcular_cancelamentos_noshow(inicio, fim)
+        if fim <= inicio:
+            print("\nA data final deve ser maior que a data inicial.")
+            input("\nPressione Enter para continuar...")
+            return
 
-    print("\nCancelamentos e No-show")
-    print(f"Canceladas: {canceladas}")
-    print(f"No-show: {noshow}")
+        canceladas, noshow = calcular_cancelamentos_noshow(inicio, fim)
 
+        print("\nCancelamentos e No-show")
+        print(f"Canceladas: {canceladas}")
+        print(f"No-show: {noshow}")
+
+        input("\nPressione Enter para continuar...")
+
+    except ValueError:
+        print("\nData inválida. Use o formato YYYY-MM-DD.")
+        input("\nPressione Enter para continuar...")
 
 def menu():
     while True:
@@ -429,9 +466,9 @@ def menu():
 ║                    HOTEL WISE                        ║
 ╚══════════════════════════════════════════════════════╝
 
-┌─────────────── HÓSPEDES ───────────────┐──────────┐
-│  1 Criar     │  2 Listar   │3 Atualiza.│4 Excluir │
-└───────────────────────────────────────────────────┘
+┌─────────────── HÓSPEDES ───────────────┐
+│  1 Criar     │  2 Listar   │ 4 Excluir │
+└────────────────────────────────────────
 
 ┌──────────────── QUARTOS ────────────────┐
 │  5 Criar     │  6 Listar   │ 7 Atualizar│   
@@ -461,7 +498,6 @@ def menu():
 
         if op == "1": criar_hospede_menu()
         elif op == "2": listar_hospedes_menu()
-        elif op == "3": atualizar_hospede_menu()
         elif op == "4": excluir_hospede_menu()
         elif op == "5": criar_quarto_menu()
         elif op == "6": listar_quartos_menu()

@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from datetime import date
-from persistencia.reserva_dao import listar_reservas
+from persistencia.reserva_dao import listar_reservas_completas
 from persistencia.quarto_dao import listar_quartos
+from persistencia.quarto_dao import buscar_quarto_por_numero
 
 relatorios_bp = Blueprint("relatorios", __name__)
 
@@ -13,7 +14,7 @@ def taxa_ocupacao():
     inicio = date.fromisoformat(request.args["inicio"])
     fim = date.fromisoformat(request.args["fim"])
 
-    reservas = listar_reservas()
+    reservas = listar_reservas_completas()
     quartos = listar_quartos()
 
     dias = (fim - inicio).days
@@ -35,31 +36,42 @@ def taxa_ocupacao():
 
 
 @relatorios_bp.get("/receita-por-tipo-quarto")
-def receita_por_tipo_quarto():
-    inicio = date.fromisoformat(request.args["inicio"])
-    fim = date.fromisoformat(request.args["fim"])
-
-    reservas = listar_reservas()
+def calcular_receita_por_tipo(inicio: date, fim: date) -> dict:
+    reservas = listar_reservas_completas()
     resultado = {}
 
     for r in reservas:
-        if r.estado in {"CHECKIN", "CHECKOUT"} and sobrepoe_periodo(r, inicio, fim):
-            tipo = r.quarto.tipo
-            entrada = max(r.data_entrada, inicio)
-            saida = min(r.data_saida, fim)
-            dias = (saida - entrada).days
+        if r.estado not in {"CHECKIN", "CHECKOUT"}:
+            continue
 
-            receita = dias * r.quarto.tarifa_base
-            resultado[tipo] = resultado.get(tipo, 0) + receita
+        if not sobrepoe_periodo(r, inicio, fim):
+            continue
 
-    return jsonify(resultado)
+        quarto = buscar_quarto_por_numero(r.quarto_id)
+        if not quarto:
+            continue
+
+        tipo = quarto.tipo
+
+        entrada = max(r.data_entrada, inicio)
+        saida = min(r.data_saida, fim)
+        dias = (saida - entrada).days
+
+        if dias <= 0:
+            continue
+
+        receita = dias * quarto.tarifa_base
+        resultado[tipo] = resultado.get(tipo, 0) + receita
+
+    return resultado
+
 
 @relatorios_bp.get("/cancelamentos-noshow")
 def cancelamentos_no_show():
     inicio = date.fromisoformat(request.args["inicio"])
     fim = date.fromisoformat(request.args["fim"])
 
-    reservas = listar_reservas()
+    reservas = listar_reservas_completas()
 
     canceladas = 0
     noshow = 0
